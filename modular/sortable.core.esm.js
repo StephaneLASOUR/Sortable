@@ -1269,7 +1269,8 @@ function Sortable(el, options) {
       y: 0
     },
     supportPointer: Sortable.supportPointer !== false && 'PointerEvent' in window && !Safari,
-    emptyInsertThreshold: 5
+    emptyInsertThreshold: 5,
+    ghostPosition: [0, 0]
   };
   PluginManager.initializePlugins(this, el, defaults); // Set default options
 
@@ -1609,7 +1610,7 @@ Sortable.prototype =
       !fallback && toggleClass(dragEl, options.dragClass, false);
       toggleClass(dragEl, options.ghostClass, true);
       Sortable.active = this;
-      fallback && this._appendGhost(); // Drag start event
+      fallback && this._appendGhost(evt); // Drag start event
 
       _dispatchEvent({
         sortable: this,
@@ -1714,13 +1715,13 @@ Sortable.prototype =
       evt.cancelable && evt.preventDefault();
     }
   },
-  _appendGhost: function _appendGhost() {
+  _appendGhost: function _appendGhost(evt) {
     // Bug if using scale(): https://stackoverflow.com/questions/2637058
     // Not being adjusted for
     if (!ghostEl) {
-      var container = this.options.fallbackOnBody ? document.body : rootEl,
-          rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),
-          options = this.options; // Position absolutely
+      var options = this.options;
+      var container = options.fallbackOnBody ? document.body : rootEl,
+          rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container); // Position absolutely
 
       if (PositionGhostAbsolutely) {
         // Get relatively positioned parent
@@ -1745,18 +1746,19 @@ Sortable.prototype =
       toggleClass(ghostEl, options.ghostClass, false);
       toggleClass(ghostEl, options.fallbackClass, true);
       toggleClass(ghostEl, options.dragClass, true);
-      css(ghostEl, 'transition', '');
-      css(ghostEl, 'transform', '');
-      css(ghostEl, 'box-sizing', 'border-box');
-      css(ghostEl, 'margin', 0);
-      css(ghostEl, 'top', rect.top);
-      css(ghostEl, 'left', rect.left);
-      css(ghostEl, 'width', rect.width);
-      css(ghostEl, 'height', rect.height);
-      css(ghostEl, 'opacity', '0.8');
-      css(ghostEl, 'position', PositionGhostAbsolutely ? 'absolute' : 'fixed');
-      css(ghostEl, 'zIndex', '100000');
-      css(ghostEl, 'pointerEvents', 'none');
+      ghostEl.style.cssText = "\n\t\t\t\tposition: fixed;\n\t\t\t\ttop: 0;\n\t\t\t\tleft: 0;\n\t\t\t\tdisplay: block;\n\t\t\t\ttransform: translate(".concat(evt.clientX + options.ghostPosition[0], "px, ").concat(evt.clientY + options.ghostPosition[1], "px) translate(-100%, -100%);"); // css(ghostEl, 'transition', '');
+      // css(ghostEl, 'transform', '');
+      // css(ghostEl, 'box-sizing', 'border-box');
+      // css(ghostEl, 'margin', 0);
+      // css(ghostEl, 'top', rect.top);
+      // css(ghostEl, 'left', rect.left);
+      // css(ghostEl, 'width', rect.width);
+      // css(ghostEl, 'height', rect.height);
+      // css(ghostEl, 'opacity', '0.8');
+      // css(ghostEl, 'position', (PositionGhostAbsolutely ? 'absolute' : 'fixed'));
+      // css(ghostEl, 'zIndex', '100000');
+      // css(ghostEl, 'pointerEvents', 'none');
+
       Sortable.ghost = ghostEl;
       container.appendChild(ghostEl); // Set transform-origin
 
@@ -3476,7 +3478,7 @@ function MultiDragPlugin() {
             rootEl: rootEl,
             name: 'select',
             targetEl: dragEl$1,
-            originalEvt: evt
+            originalEvent: evt
           }); // Modifier activated, select from last to dragEl
 
           if (evt.shiftKey && lastMultiDragSelect && sortable.el.contains(lastMultiDragSelect)) {
@@ -3505,7 +3507,7 @@ function MultiDragPlugin() {
                   rootEl: rootEl,
                   name: 'select',
                   targetEl: children[i],
-                  originalEvt: evt
+                  originalEvent: evt
                 });
               }
             }
@@ -3522,7 +3524,7 @@ function MultiDragPlugin() {
             rootEl: rootEl,
             name: 'deselect',
             targetEl: dragEl$1,
-            originalEvt: evt
+            originalEvent: evt
           });
         }
       } // Multi-drag drop
@@ -3633,7 +3635,7 @@ function MultiDragPlugin() {
           rootEl: this.sortable.el,
           name: 'deselect',
           targetEl: el,
-          originalEvt: evt
+          originalEvent: evt
         });
       }
     },
