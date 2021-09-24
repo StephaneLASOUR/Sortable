@@ -393,7 +393,8 @@ function Sortable(el, options) {
 		fallbackTolerance: 0,
 		fallbackOffset: {x: 0, y: 0},
 		supportPointer: Sortable.supportPointer !== false && ('PointerEvent' in window) && !Safari,
-		emptyInsertThreshold: 5
+		emptyInsertThreshold: 5,
+		ghostPosition: [0, 0]
 	};
 
 	PluginManager.initializePlugins(this, el, defaults);
@@ -729,7 +730,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			Sortable.active = this;
 
-			fallback && this._appendGhost();
+			fallback && this._appendGhost(evt);
 
 			// Drag start event
 			_dispatchEvent({
@@ -847,13 +848,13 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 	},
 
-	_appendGhost: function () {
+	_appendGhost: function (evt) {
 		// Bug if using scale(): https://stackoverflow.com/questions/2637058
 		// Not being adjusted for
 		if (!ghostEl) {
-			let container = this.options.fallbackOnBody ? document.body : rootEl,
-				rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),
-				options = this.options;
+			const { options } = this
+			let container = options.fallbackOnBody ? document.body : rootEl,
+				rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container)
 
 			// Position absolutely
 			if (PositionGhostAbsolutely) {
@@ -886,19 +887,26 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			toggleClass(ghostEl, options.fallbackClass, true);
 			toggleClass(ghostEl, options.dragClass, true);
 
-			css(ghostEl, 'transition', '');
-			css(ghostEl, 'transform', '');
+			ghostEl.style.cssText = `
+				position: fixed;
+				top: 0;
+				left: 0;
+				display: block;
+				transform: translate(${evt.clientX + options.ghostPosition[0]}px, ${evt.clientY + options.ghostPosition[1]}px) translate(-100%, -100%);`
 
-			css(ghostEl, 'box-sizing', 'border-box');
-			css(ghostEl, 'margin', 0);
-			css(ghostEl, 'top', rect.top);
-			css(ghostEl, 'left', rect.left);
-			css(ghostEl, 'width', rect.width);
-			css(ghostEl, 'height', rect.height);
-			css(ghostEl, 'opacity', '0.8');
-			css(ghostEl, 'position', (PositionGhostAbsolutely ? 'absolute' : 'fixed'));
-			css(ghostEl, 'zIndex', '100000');
-			css(ghostEl, 'pointerEvents', 'none');
+			// css(ghostEl, 'transition', '');
+			// css(ghostEl, 'transform', '');
+
+			// css(ghostEl, 'box-sizing', 'border-box');
+			// css(ghostEl, 'margin', 0);
+			// css(ghostEl, 'top', rect.top);
+			// css(ghostEl, 'left', rect.left);
+			// css(ghostEl, 'width', rect.width);
+			// css(ghostEl, 'height', rect.height);
+			// css(ghostEl, 'opacity', '0.8');
+			// css(ghostEl, 'position', (PositionGhostAbsolutely ? 'absolute' : 'fixed'));
+			// css(ghostEl, 'zIndex', '100000');
+			// css(ghostEl, 'pointerEvents', 'none');
 
 
 			Sortable.ghost = ghostEl;
