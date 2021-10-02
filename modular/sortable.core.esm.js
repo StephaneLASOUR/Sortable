@@ -1720,7 +1720,7 @@ Sortable.prototype =
     // Not being adjusted for
     if (!ghostEl) {
       var options = this.options;
-      var container = options.fallbackOnBody ? document.body : rootEl,
+      var container = options.fallbackOnTargetSelector ? document.querySelector(options.fallbackOnTargetSelector) || document.body : rootEl,
           rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container); // Position absolutely
 
       if (PositionGhostAbsolutely) {
@@ -1742,7 +1742,7 @@ Sortable.prototype =
         ghostRelativeParentInitialScroll = getRelativeScrollOffset(ghostRelativeParent);
       }
 
-      ghostEl = dragEl.cloneNode(true);
+      ghostEl = options.ghostCloneProvider ? options.ghostCloneProvider(dragEl) : dragEl.cloneNode(true);
       toggleClass(ghostEl, options.ghostClass, false);
       toggleClass(ghostEl, options.fallbackClass, true);
       toggleClass(ghostEl, options.dragClass, true);
@@ -1761,8 +1761,7 @@ Sortable.prototype =
 
       Sortable.ghost = ghostEl;
       container.appendChild(ghostEl); // Set transform-origin
-
-      css(ghostEl, 'transform-origin', tapDistanceLeft / parseInt(ghostEl.style.width) * 100 + '% ' + tapDistanceTop / parseInt(ghostEl.style.height) * 100 + '%');
+      // css(ghostEl, 'transform-origin', (tapDistanceLeft / parseInt(ghostEl.style.width) * 100) + '% ' + (tapDistanceTop / parseInt(ghostEl.style.height) * 100) + '%');
     }
   },
   _onDragStart: function _onDragStart(
