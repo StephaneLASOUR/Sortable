@@ -853,7 +853,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// Not being adjusted for
 		if (!ghostEl) {
 			const { options } = this
-			let container = options.fallbackOnBody ? document.body : rootEl,
+			let container = options.fallbackOnTargetSelector ? (document.querySelector(options.fallbackOnTargetSelector) || document.body) : rootEl,
 				rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container)
 
 			// Position absolutely
@@ -881,7 +881,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			}
 
 
-			ghostEl = dragEl.cloneNode(true);
+			ghostEl = options.ghostCloneProvider ? options.ghostCloneProvider(dragEl) : dragEl.cloneNode(true)
 
 			toggleClass(ghostEl, options.ghostClass, false);
 			toggleClass(ghostEl, options.fallbackClass, true);
@@ -914,7 +914,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			container.appendChild(ghostEl);
 
 			// Set transform-origin
-			css(ghostEl, 'transform-origin', (tapDistanceLeft / parseInt(ghostEl.style.width) * 100) + '% ' + (tapDistanceTop / parseInt(ghostEl.style.height) * 100) + '%');
+			// css(ghostEl, 'transform-origin', (tapDistanceLeft / parseInt(ghostEl.style.width) * 100) + '% ' + (tapDistanceTop / parseInt(ghostEl.style.height) * 100) + '%');
 		}
 	},
 
