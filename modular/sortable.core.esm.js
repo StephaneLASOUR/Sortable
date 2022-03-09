@@ -1532,7 +1532,11 @@ Sortable.prototype =
         on(ownerDocument, 'touchmove', _this._delayedDragTouchMoveHandler);
         options.supportPointer && on(ownerDocument, 'pointermove', _this._delayedDragTouchMoveHandler);
         _this._dragStartTimer = setTimeout(function () {
-          return !window.disabledSortable && dragStartFn();
+          if (window.disabledSortable) {
+            _this._disableDelayedDragEvents();
+          } else {
+            dragStartFn();
+          }
         }, options.delay);
       } else {
         dragStartFn();
