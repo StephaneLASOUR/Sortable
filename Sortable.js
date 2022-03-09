@@ -8,7 +8,7 @@
  import { version } from '../package.json';
 
  import { IE11OrLess, Edge, FireFox, Safari, IOS, ChromeForAndroid } from './BrowserInfo.js';
- 
+
  import AnimationStateManager from './Animation.js';
  
  import PluginManager from './PluginManager.js';
@@ -36,7 +36,6 @@
    clone,
    expando
  } from './utils.js';
- 
  
  let pluginEvent = function(eventName, sortable, { evt: originalEvent, ...data } = {}) {
    PluginManager.pluginEvent.bind(Sortable)(eventName, sortable, {
@@ -588,7 +587,7 @@
  
        dragStartFn = function () {
          pluginEvent('delayEnded', _this, { evt });
-         if (Sortable.eventCanceled) {
+         if (Sortable.eventCanceled || window.disabledSortable) {
            _this._onDrop();
            return;
          }
@@ -637,7 +636,7 @@
  
        // Delay is impossible for native DnD in Edge or IE
        if (options.delay && (!options.delayOnTouchOnly || touch) && (!this.nativeDraggable || !(Edge || IE11OrLess))) {
-         if (Sortable.eventCanceled) {
+         if (Sortable.eventCanceled|| window.disabledSortable) {
            this._onDrop();
            return;
          }
@@ -651,7 +650,7 @@
          on(ownerDocument, 'touchmove', _this._delayedDragTouchMoveHandler);
          options.supportPointer && on(ownerDocument, 'pointermove', _this._delayedDragTouchMoveHandler);
  
-         _this._dragStartTimer = setTimeout(dragStartFn, options.delay);
+         _this._dragStartTimer = setTimeout(() => !window.disabledSortable && dragStartFn(), options.delay);
        } else {
          dragStartFn();
        }
@@ -853,7 +852,7 @@
      // Not being adjusted for
      if (!ghostEl) {
        const { options } = this
-       let container = options.fallbackOnBody ? document.body : rootEl,
+       let container = options.fallbackOnTargetSelector ? document.querySelector(options.fallbackOnTargetSelector) || document.body : rootEl,
          rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container)
  
        // Position absolutely
@@ -881,7 +880,7 @@
        }
  
  
-       ghostEl = dragEl.cloneNode(true);
+       ghostEl = options.ghostCloneProvider ? options.ghostCloneProvider(dragEl) : dragEl.cloneNode(true)
  
        toggleClass(ghostEl, options.ghostClass, false);
        toggleClass(ghostEl, options.fallbackClass, true);
@@ -914,7 +913,7 @@
        container.appendChild(ghostEl);
  
        // Set transform-origin
-       css(ghostEl, 'transform-origin', (tapDistanceLeft / parseInt(ghostEl.style.width) * 100) + '% ' + (tapDistanceTop / parseInt(ghostEl.style.height) * 100) + '%');
+       // css(ghostEl, 'transform-origin', (tapDistanceLeft / parseInt(ghostEl.style.width) * 100) + '% ' + (tapDistanceTop / parseInt(ghostEl.style.height) * 100) + '%');
      }
    },
  
@@ -924,13 +923,13 @@
      let options = _this.options;
  
      pluginEvent('dragStart', this, { evt });
-     if (Sortable.eventCanceled) {
+     if (Sortable.eventCanceled || window.disabledSortable) {
        this._onDrop();
        return;
      }
  
      pluginEvent('setupClone', this);
-     if (!Sortable.eventCanceled) {
+     if (!Sortable.eventCanceled && !window.disabledSortable) {
        cloneEl = clone(dragEl);
  
        cloneEl.draggable = false;
@@ -946,7 +945,7 @@
      // #1143: IFrame support workaround
      _this.cloneId = _nextTick(function() {
        pluginEvent('clone', _this);
-       if (Sortable.eventCanceled) return;
+       if (Sortable.eventCanceled || window.disabledSortable) return;
  
        if (!_this.options.removeCloneOnHide) {
          rootEl.insertBefore(cloneEl, dragEl);
@@ -1125,7 +1124,7 @@
      target = closest(target, options.draggable, el, true);
  
      dragOverEvent('dragOver');
-     if (Sortable.eventCanceled) return completedFired;
+     if (Sortable.eventCanceled || window.disabledSortable) return completedFired;
  
      if (
        dragEl.contains(evt.target) ||
@@ -1154,7 +1153,7 @@
        dragRect = getRect(dragEl);
  
        dragOverEvent('dragOverValid');
-       if (Sortable.eventCanceled) return completedFired;
+       if (Sortable.eventCanceled || window.disabledSortable) return completedFired;
  
        if (revert) {
          parentEl = rootEl; // actualization
@@ -1164,7 +1163,7 @@
  
          dragOverEvent('revert');
  
-         if (!Sortable.eventCanceled) {
+         if (!Sortable.eventCanceled && !window.disabledSortable) {
            if (nextEl) {
              rootEl.insertBefore(dragEl, nextEl);
            } else {
@@ -1356,7 +1355,7 @@
      newIndex = index(dragEl);
      newDraggableIndex = index(dragEl, options.draggable);
  
-     if (Sortable.eventCanceled) {
+     if (Sortable.eventCanceled || window.disabledSortable) {
        this._nulling();
        return;
      }
@@ -1699,7 +1698,7 @@
    _hideClone: function() {
      if (!cloneHidden) {
        pluginEvent('hideClone', this);
-       if (Sortable.eventCanceled) return;
+       if (Sortable.eventCanceled || window.disabledSortable) return;
  
  
        css(cloneEl, 'display', 'none');
@@ -1719,7 +1718,7 @@
  
      if (cloneHidden) {
        pluginEvent('showClone', this);
-       if (Sortable.eventCanceled) return;
+       if (Sortable.eventCanceled || window.disabledSortable) return;
  
        // show clone at dragEl or original position
        if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {

@@ -1467,7 +1467,7 @@ Sortable.prototype =
           evt: evt
         });
 
-        if (Sortable.eventCanceled) {
+        if (Sortable.eventCanceled || window.disabledSortable) {
           _this._onDrop();
 
           return;
@@ -1516,7 +1516,7 @@ Sortable.prototype =
       }); // Delay is impossible for native DnD in Edge or IE
 
       if (options.delay && (!options.delayOnTouchOnly || touch) && (!this.nativeDraggable || !(Edge || IE11OrLess))) {
-        if (Sortable.eventCanceled) {
+        if (Sortable.eventCanceled || window.disabledSortable) {
           this._onDrop();
 
           return;
@@ -1531,7 +1531,9 @@ Sortable.prototype =
         on(ownerDocument, 'mousemove', _this._delayedDragTouchMoveHandler);
         on(ownerDocument, 'touchmove', _this._delayedDragTouchMoveHandler);
         options.supportPointer && on(ownerDocument, 'pointermove', _this._delayedDragTouchMoveHandler);
-        _this._dragStartTimer = setTimeout(dragStartFn, options.delay);
+        _this._dragStartTimer = setTimeout(function () {
+          return !window.disabledSortable && dragStartFn();
+        }, options.delay);
       } else {
         dragStartFn();
       }
@@ -1746,7 +1748,7 @@ Sortable.prototype =
       toggleClass(ghostEl, options.ghostClass, false);
       toggleClass(ghostEl, options.fallbackClass, true);
       toggleClass(ghostEl, options.dragClass, true);
-      ghostEl.style.cssText = "\n\t\t\t\tposition: fixed;\n\t\t\t\ttop: 0;\n\t\t\t\tleft: 0;\n\t\t\t\tdisplay: block;\n\t\t\t\ttransform: translate(".concat(evt.clientX + options.ghostPosition[0], "px, ").concat(evt.clientY + options.ghostPosition[1], "px) translate(-100%, -100%);"); // css(ghostEl, 'transition', '');
+      ghostEl.style.cssText = "\n         position: fixed;\n         top: 0;\n         left: 0;\n         display: block;\n         transform: translate(".concat(evt.clientX + options.ghostPosition[0], "px, ").concat(evt.clientY + options.ghostPosition[1], "px) translate(-100%, -100%);"); // css(ghostEl, 'transition', '');
       // css(ghostEl, 'transform', '');
       // css(ghostEl, 'box-sizing', 'border-box');
       // css(ghostEl, 'margin', 0);
@@ -1777,7 +1779,7 @@ Sortable.prototype =
       evt: evt
     });
 
-    if (Sortable.eventCanceled) {
+    if (Sortable.eventCanceled || window.disabledSortable) {
       this._onDrop();
 
       return;
@@ -1785,7 +1787,7 @@ Sortable.prototype =
 
     pluginEvent('setupClone', this);
 
-    if (!Sortable.eventCanceled) {
+    if (!Sortable.eventCanceled && !window.disabledSortable) {
       cloneEl = clone(dragEl);
       cloneEl.draggable = false;
       cloneEl.style['will-change'] = '';
@@ -1799,7 +1801,7 @@ Sortable.prototype =
 
     _this.cloneId = _nextTick(function () {
       pluginEvent('clone', _this);
-      if (Sortable.eventCanceled) return;
+      if (Sortable.eventCanceled || window.disabledSortable) return;
 
       if (!_this.options.removeCloneOnHide) {
         rootEl.insertBefore(cloneEl, dragEl);
@@ -1973,7 +1975,7 @@ Sortable.prototype =
 
     target = closest(target, options.draggable, el, true);
     dragOverEvent('dragOver');
-    if (Sortable.eventCanceled) return completedFired;
+    if (Sortable.eventCanceled || window.disabledSortable) return completedFired;
 
     if (dragEl.contains(evt.target) || target.animated && target.animatingX && target.animatingY || _this._ignoreWhileAnimating === target) {
       return completed(false);
@@ -1986,7 +1988,7 @@ Sortable.prototype =
       vertical = this._getDirection(evt, target) === 'vertical';
       dragRect = getRect(dragEl);
       dragOverEvent('dragOverValid');
-      if (Sortable.eventCanceled) return completedFired;
+      if (Sortable.eventCanceled || window.disabledSortable) return completedFired;
 
       if (revert) {
         parentEl = rootEl; // actualization
@@ -1997,7 +1999,7 @@ Sortable.prototype =
 
         dragOverEvent('revert');
 
-        if (!Sortable.eventCanceled) {
+        if (!Sortable.eventCanceled && !window.disabledSortable) {
           if (nextEl) {
             rootEl.insertBefore(dragEl, nextEl);
           } else {
@@ -2167,7 +2169,7 @@ Sortable.prototype =
     newIndex = index(dragEl);
     newDraggableIndex = index(dragEl, options.draggable);
 
-    if (Sortable.eventCanceled) {
+    if (Sortable.eventCanceled || window.disabledSortable) {
       this._nulling();
 
       return;
@@ -2473,7 +2475,7 @@ Sortable.prototype =
   _hideClone: function _hideClone() {
     if (!cloneHidden) {
       pluginEvent('hideClone', this);
-      if (Sortable.eventCanceled) return;
+      if (Sortable.eventCanceled || window.disabledSortable) return;
       css(cloneEl, 'display', 'none');
 
       if (this.options.removeCloneOnHide && cloneEl.parentNode) {
@@ -2492,7 +2494,7 @@ Sortable.prototype =
 
     if (cloneHidden) {
       pluginEvent('showClone', this);
-      if (Sortable.eventCanceled) return; // show clone at dragEl or original position
+      if (Sortable.eventCanceled || window.disabledSortable) return; // show clone at dragEl or original position
 
       if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {
         rootEl.insertBefore(cloneEl, dragEl);
